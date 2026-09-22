@@ -99,10 +99,20 @@ if __name__ == "__main__":
     p.add_argument("--linear", action="store_true",
                    help="use the linearized-arm baseline plant")
     p.add_argument("--tol", type=float, default=1e-6)
+    p.add_argument("--radius", type=float, default=RADIUS,
+                   help="reach amplitude [cm]")
+    p.add_argument("--duration", type=float, default=DURATION,
+                   help="movement duration [s]")
+    p.add_argument("--center", type=float, nargs=2, default=list(CENTER),
+                   metavar=("X", "Y"), help="hand start position [cm]")
     args = p.parse_args()
 
+    center = tuple(args.center)
     kind = "linear" if args.linear else "nonlinear"
     print(f"Solving center-out task, {args.n_dir} targets "
-          f"({M.W.shape[0]} nodes, {kind} arm, iLQG)...")
-    data = run(n_dir=args.n_dir, linearize=args.linear, tol=args.tol)
+          f"({M.W.shape[0]} nodes, {kind} arm, iLQG), "
+          f"center={center} cm, radius={args.radius} cm, "
+          f"duration={args.duration} s...")
+    data = run(n_dir=args.n_dir, linearize=args.linear, tol=args.tol,
+               radius=args.radius, duration=args.duration, center=center)
     save(data, args.out)

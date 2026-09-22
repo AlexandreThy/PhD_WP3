@@ -2,19 +2,45 @@
 probes for *traces of nonlinearity* in the network activity of the combined
 nonlinear-arm + iLQG model.
 
-Key idea for the nonlinearity probes
-------------------------------------
-If the plant were linear (linearized arm), optimal control about a fixed start
-posture would make network activity essentially *antisymmetric* across opposite
-reach directions (r(theta+pi) = -r(theta)), directional tuning would be a pure
-cosine (first harmonic only), and preferred directions would be ~uniform. The
-nonlinear two-link arm (configuration-dependent inertia, Coriolis / centripetal
-terms, intersegmental coupling) breaks each of these:
-  * opposite-direction asymmetry  > 0,
-  * a measurable 2nd-harmonic in directional tuning,
-  * a biased (bimodal) preferred-direction distribution.
-`centerout_linear.py` produces the linearized-arm control to serve as the
-reference "no-nonlinearity" baseline for comparison.
+What the linear baseline does and does NOT remove
+-------------------------------------------------
+`LINEARIZE` freezes the inertia at M(THETA2_REF) and drops the Coriolis terms.
+It does *not* make the plant isotropic, and it does *not* linearize the task:
+
+  * M(THETA2_REF) is still a full anisotropic matrix (eigenvalue ratio ~4.6),
+  * the hand Jacobian J is untouched (pure kinematics, identical in both models),
+  * the joint target xtarg(theta) = IK(center + R*[cos, sin]) is a *nonlinear*
+    function of reach direction in both models.
+
+Because the network never receives arm state (fx is block-triangular: the plant
+is a one-way cascade network -> torque -> arm), for the linear arm the optimal
+activity is affine in the joint target, r_i(theta) ~ c_i + G[i,:] . [cos, sin]
+with G = pinv(Wout) @ M @ inv(J). The PD distribution is therefore the pushforward
+of the readout directions through J^-T M -- an anisotropic map built from
+kinematics and frozen inertia alone. This predicts the observed bimodal axis to
+within ~2 deg *with no nonlinearity at all*.
+
+So bimodal PDs and a nonzero 2nd harmonic are NOT signatures of nonlinearity
+here: the linearized baseline shows them too (measured at 12 cm / 0.5 s:
+bimodal r = 0.67 linear vs 0.68 nonlinear; P2/P1 = 0.018 vs 0.019).
+
+Where the nonlinearity actually shows up
+----------------------------------------
+Coriolis ~ v^2 is invariant under reversing the movement, so C(theta+pi) ~
+C(theta): it is nearly EVEN in reach direction, hence lives in even harmonics.
+The inertia-variation term is even to leading order too. But PD = arctan2(b1,a1)
+is read off the FIRST harmonic, and on a uniform direction grid cos/sin(theta)
+are exactly orthogonal to cos/sin(2*theta) -- so the PD estimate is blind to the
+even harmonics by construction (a 2nd harmonic 10x the 1st shifts the fitted PD
+by exactly zero). This is why the nonlinearity reshapes activity by ~30%
+(`node_divergence`) while barely moving the PD.
+
+Probes that DO separate the two plants: `opposite_asymmetry` (the even/odd ratio
+-- exactly where the nonlinearity lives) and `node_divergence`. The PD only
+separates once the reach is large and fast enough to break the
+direction-reversal symmetry (see `fig_pd`'s docstring for a working setting).
+
+Run `centerout.py --linear` to produce the linearized-arm baseline cache.
 """
 
 import numpy as np
@@ -108,6 +134,21 @@ def fig_pd(d, dlin=None, fname="fig_pd_distribution.png", r2_min=0.5):
     """Preferred-direction polar histogram (Lillicrap & Scott Fig. 3 analogue).
 
     If dlin (linear-arm baseline) is given, plot it alongside for comparison.
+
+    Note this panel barely separates the two plants at the default reach
+    (12 cm / 0.5 s: bimodal r = 0.68 nonlinear vs 0.67 linear) -- see the module
+    docstring for why (the PD reads the 1st harmonic; the nonlinearity is even,
+    hence 2nd-harmonic). It separates for large, fast reaches, which break the
+    direction-reversal symmetry:
+
+        python centerout.py --n_dir 24 --radius 20 --duration 0.35 \
+               --center 0 40 --out centerout_nl24_big.npz  --tol 1e-4
+        python centerout.py --n_dir 24 --radius 20 --duration 0.35 \
+               --center 0 40 --out centerout_lin24_big.npz --tol 1e-4 --linear
+
+    giving bimodal r = 0.79 (nonlinear) vs 0.64 (linear), median per-node PD
+    shift 5.3 deg. The bimodal *axis* stays put (~2 deg) in every setting: it is
+    fixed by J^-T M, which both plants share.
     """
     states, ang, N = d["states"], d["ang"], int(d["N"])
     fit = tuning_fit(neuron_feature(states, N, "mean"), ang)
@@ -134,12 +175,83 @@ def fig_pd(d, dlin=None, fname="fig_pd_distribution.png", r2_min=0.5):
 
 
 # -----------------------------------------------------------------------------
+# Nonlinearity probe 0 -- rank of the condition-dependence (the sharpest test)
+# -----------------------------------------------------------------------------
+def target_affine_r2(d):
+    """Is the activity an AFFINE function of the 2-D joint target?
+
+        r(theta, t)  ~  c(t) + G(t) . xtarg(theta)
+
+    For a **linear** plant with quadratic cost this is exact, not approximate:
+    LQR makes the optimal control affine in the target, and the network never
+    receives arm state (fx is block-triangular), so across conditions the
+    activity matrix r[:, t, :] has **rank <= 1 + dim(xtarg) = 3 at every time**,
+    no matter how many targets are probed. A nonlinear plant has no such bound.
+
+    Measured (20 cm / 0.35 s, 24 targets):
+
+        linear     R^2 = 0.99999982   median across-direction rank 4  (the 4th
+                                      singular value sits at ~1e-4 = the iLQG
+                                      tol, i.e. solver residue, not signal)
+        nonlinear  R^2 = 0.97519534   median across-direction rank 15
+
+    and the linear rank stays at 4 whether you probe 6, 8, 12 or 24 targets,
+    while the nonlinear rank tracks the number of conditions (6/8/12/15).
+
+    This is the precise sense in which the nonlinear plant "needs more
+    dimensions": not more *variance* dimensions -- PCA effective rank is 2.51 vs
+    2.46, blind to this -- but a higher-rank dependence on the task condition.
+    The extra dimensions carry only ~2.5% of the variance and are ~89%
+    direction-EVEN, i.e. they are exactly the interaction-torque subspace that
+    the preferred direction cannot see (see module docstring).
+
+    Returns (r2, residual) with residual shaped like the activity.
+    """
+    import iLQG_Combined as _M
+    N = int(d["N"])
+    st = d["states"]
+    nd, T = st.shape[:2]
+    xt = np.array([_M.compute_angles_from_cartesian(t[0], t[1]) for t in d["targ"]])
+    X = np.concatenate([np.ones((nd, 1)), xt], axis=1)      # [1, xtarg]  (nd, 3)
+    r = st[:, :, :N]
+    res = np.zeros_like(r)
+    for t in range(T):
+        beta, *_ = np.linalg.lstsq(X, r[:, t, :], rcond=None)
+        res[:, t, :] = r[:, t, :] - X @ beta
+    ss_res = (res ** 2).sum()
+    ss_tot = ((r - r.mean(axis=0, keepdims=True)) ** 2).sum()
+    return 1 - ss_res / ss_tot, res
+
+
+def condition_rank(d, tol=1e-6):
+    """Median numerical rank over time of the across-direction activity matrix
+    r[:, t, :]. Capped at 3 (+solver residue) for a linear plant; unbounded for
+    a nonlinear one. See `target_affine_r2`."""
+    N = int(d["N"])
+    r = d["states"][:, :, :N]
+    rk = []
+    for t in range(1, r.shape[1]):
+        s = np.linalg.svd(r[:, t, :], compute_uv=False)
+        rk.append(int((s > tol * s[0]).sum()))
+    return float(np.median(rk))
+
+
+# -----------------------------------------------------------------------------
 # Nonlinearity probe 1 -- opposite-direction asymmetry over time
 # -----------------------------------------------------------------------------
 def opposite_asymmetry(states, ang, N):
     """For each opposite target pair, antisymmetry index over time:
         A(t) = ||r(theta,t) + r(theta+pi,t)|| / ||r(theta,t) - r(theta+pi,t)||
-    A == 0 for a linear plant; > 0 signals nonlinearity."""
+
+    This is the even/odd ratio of the directional response, i.e. exactly the
+    subspace the arm nonlinearity occupies (Coriolis ~ v^2 is even under
+    direction reversal). It is the most sensitive probe here.
+
+    Note A > 0 even for the *linear* baseline (measured ~0.22 at 12 cm / 0.5 s),
+    because the inverse kinematics theta -> joint target is nonlinear regardless
+    of the plant. The nonlinear arm raises it to ~0.36. Compare against the
+    linearized run rather than against zero.
+    """
     r = states[:, :, :N]
     n_dir = len(ang)
     assert n_dir % 2 == 0
