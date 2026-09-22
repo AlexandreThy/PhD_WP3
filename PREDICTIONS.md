@@ -15,10 +15,24 @@ tau(t) = M(theta) theta_ddot  +  C(theta, theta_dot)  +  B theta_dot
          └ inertial (∝ accel) ┘   └ Coriolis (∝ v²)  ┘   └ viscous ┘
 ```
 
-`C` (Coriolis/centripetal) is the purely-nonlinear term; it **vanishes for a
-linearized arm**. If M1 activity is tied to the joint-torque / muscle command
-(Lillicrap & Scott 2013; Todorov 2000), M1 must carry `C`. Everything below is
-about how to see it.
+There are **two** purely-nonlinear terms, and both vanish for the linearized arm:
+
+```
+C(theta, theta_dot)                     Coriolis / centripetal,  ∝ v²
+dM(theta_2) theta_ddot,  dM = M(theta_2) - M(theta_2_ref)   inertia variation, ∝ accel
+```
+
+If M1 activity is tied to the joint-torque / muscle command (Lillicrap & Scott
+2013; Todorov 2000), M1 must carry both.
+
+> **Correction (measured on the model, see `fig_nonlinearity_traces.png`).** An
+> earlier version of this document targeted `C` alone. That is the **weaker** of
+> the two traces. In network activity at 20 cm / 0.35 s, the cross-validated
+> ΔR² over a linear-kinematics model is **0.041 for Coriolis but 0.147 for the
+> inertia-variation term** — 3.6× larger, and with a cleaner separation from the
+> linearized-arm null (37× vs 19×). The two also differ in *timing*: `C` is
+> peak-speed-locked (corr with v² = **+0.998**), `dM·theta_ddot` is
+> acceleration-locked (|corr| with |accel| = 0.77). Target both.
 
 ## What the model says (validated on the model itself)
 
@@ -33,59 +47,259 @@ hand speed**, whereas the inertial torque `M·theta_ddot` is **biphasic**
 temporally near-orthogonal (corr ≈ −0.2). So a neural component **locked to peak
 speed** (not to acceleration) is the interaction-torque fingerprint.
 
-**Why naive regression fails (the crucial caveat).** In a *standard* center-out,
-`C` is largely **independent** of the sampled kinematics (reconstructable from
-`[theta, theta_dot, theta_ddot]` only R² ≈ 0.2, i.e. **~80% independent**) — good
-— **but** it contributes only **~1–3% of the torque/neural variance** (it's a
-brief pulse atop huge biphasic inertial swings). With only a handful of reach
-conditions, cross-validated encoding regression *overfits and returns ΔR² ≈ 0
-even for the torque that provably contains C*. **So do not expect a simple
-"add-Coriolis-regressor" ΔR² test to work.**
+**Why naive regression fails — and how to fix it.** Pooled over all directions,
+the nonlinear terms contribute only ~1–3% of the neural variance (a pulse atop
+huge biphasic inertial swings), so a cross-validated encoding regression returns
+ΔR² ≈ 0.046 — weak and easy to dismiss.
+
+**The fix: average opposite directions first.** Both nonlinear terms are (to
+leading order) **even** under reach-direction reversal — `C` because `v²` is
+invariant to reversing `v`, `dM·theta_ddot` because `dM` and `theta_ddot` flip
+sign together. The odd/1st-harmonic component carries neither but dominates the
+variance. So form
+
+```
+r_even(theta, t) = [ r(theta, t) + r(theta+pi, t) ] / 2
+```
+
+and run the same cross-validated encoding test on `r_even`. On the model this
+raises ΔR² from **0.046 → 0.160** (3.5×) at no cost in assumptions, against a
+linearized-arm null of 0.007 — a **24× separation**. Implemented as
+`predictions.term_dr2(states, N, dur, term, even=True)`.
+
+This same symmetry is why the **preferred-direction distribution is the wrong
+readout**: PD is read off the 1st harmonic, which is exactly orthogonal to the
+even harmonics on a uniform direction grid (see `README_iLQG.md`). The
+nonlinearity reshapes ~30% of the activity while moving PDs by ~3°.
 
 ## How to actually detect it — recommendations
 
-1. **Amplify the signal.** Use your **fastest / largest** reaches; the trace
-   grows as v² and with amplitude. Pool many trials to beat noise.
+1. **Amplify the signal — with SPEED, not amplitude.** The trace grows as v².
+   Amplitude at *matched peak speed* does **not** help: over 10 → 20 cm at a
+   fixed 1.1 m/s peak speed, `|C|/|tau|` more than doubles (9.7% → 22.6%) while
+   ΔR²_even for Coriolis *falls* (0.054 → 0.040). Raising the Coriolis fraction
+   of the **torque** is not the same as raising its share of the **neural**
+   variance — at matched speed `C` is fixed while everything else grows. Pool
+   many trials to beat noise.
 
-2. **Target the timing, not just the tuning.** Split the movement-epoch activity
-   into an **acceleration-locked** and a **speed²-locked** component (regress the
-   *time course* onto `theta_ddot(t)` and `|v(t)|²`/`C(t)`). Look for reliable,
-   low-dimensional population activity **locked to peak speed**. This exploits
-   the temporal orthogonality above and is far more powerful than a pooled ΔR².
+2. **Average opposite directions before regressing** (see above). This is the
+   single biggest win: 3.5× on ΔR², for free.
 
-3. **Break the confound by design (gold standard).** The clean way to show M1
+3. **Target the timing — but do not expect a clean peak-speed lock in the
+   neural data.** The *torques* separate beautifully (`C` peaks at peak speed,
+   `dM·theta_ddot` at peak acceleration). The *neural* residual of a linear
+   kinematic model does not: on the model it peaks at 311 ms — near peak
+   acceleration (329 ms), not peak speed (206 ms) — and correlates **−0.54**
+   with v². Reason: the neural footprint is dominated by the acceleration-locked
+   inertia-variation term, and activity leads torque through the actuation
+   filter (`Wout·r = tau + tau_act·tau_dot`). Fit both regressors explicitly
+   rather than looking for a peak-speed-locked bump.
+
+4. **Break the confound by design (gold standard).** The clean way to show M1
    "knows" the nonlinear dynamics is to **dissociate dynamics from kinematics**:
    - **inertial loads / velocity-dependent force fields** (exactly Kalidindi Fig
      3, and Lillicrap & Scott's loads): same kinematics, different nonlinear
      torques → the neural change tracks the dynamics, not the movement.
-   - **different arm postures / workspace locations**: `M(theta)` and `C` rotate
-     with configuration in a specific, computable way (Lillicrap & Scott show PD
-     rotation with posture).
    - **a wide, independent range of amplitude × speed**: inertial ∝ D/T²,
-     Coriolis ∝ D²/T², so their ratio ∝ amplitude — varying amplitude and speed
-     independently separates the two.
+     Coriolis ∝ D²/T², so their *torque* ratio ∝ amplitude. Useful for EMG /
+     estimated torque — but see rec. 1: on this model that ratio did **not**
+     translate into neural detectability.
+   - ⚠️ **PD rotation with posture is NOT a valid test.** `M(theta)` does rotate
+     with configuration, but the PD distribution here is the pushforward of the
+     readout through `J⁻ᵀM` — and a **frozen-inertia linear plant reproduces the
+     bimodal axis to within ~2°** (`README_iLQG.md`). Posture-dependent PD
+     rotation follows from kinematics + *any* anisotropic inertia; it does not
+     require knowledge of the nonlinearity.
 
-4. **Encoding comparison, done right.** Fit population activity with a **full
-   inverse-dynamics** model (incl. `C`) vs a **linear-kinematics** model, with
+5. **Encoding comparison, done right.** Fit population activity with a **full
+   inverse-dynamics** model (incl. both `C` and `dM·theta_ddot`) vs a
+   **linear-kinematics** model, on the **direction-even component**, with
    **cross-validation across the dissociating conditions** (loads / postures /
    amplitudes), and look in the **torque/EMG-aligned subspace** (regress
    population onto measured EMG or estimated torque first).
 
 ## The falsifiable prediction
 
-M1 contains a **velocity²-locked, interaction-torque-aligned** component that
-(a) peaks at peak hand speed, (b) has the directional pattern of the computed
-Coriolis torque (largest for large-amplitude two-joint reaches), and (c) grows
-∝ v² and with reach amplitude / added inertia. A **linear** internal model can
-produce none of these. Its presence is the trace of nonlinearity knowledge; its
-absence (with adequate speed range and power) would challenge the internal-model
-account.
+In the **direction-even** component of M1 activity (opposite reaches averaged),
+a cross-validated encoding model gains **significant ΔR² from the two nonlinear
+interaction-torque regressors** — `C(theta, theta_dot)` and
+`dM(theta_2)·theta_ddot` — over a linear-kinematics model, with the
+inertia-variation term the **stronger** of the two. The gain grows with **peak
+speed** (∝ v²), not with amplitude at matched speed. A linear internal model
+produces neither term.
 
-## Recipe checklist
+Model effect sizes at 20 cm / 0.35 s (peak speed 1.17 m/s), against the
+linearized-arm null:
 
-- Joint kinematics `theta, theta_dot, theta_ddot` (IK from hand, or encoders),
-  trial-averaged per target × speed bin; smooth before differentiating.
-- Interaction torque `C(theta,theta_dot)` from a macaque 2-link inertial model
-  (e.g. Cheng & Scott 2000); full inverse dynamics if EMG/force available.
-- Timing analysis (rec. 2) + design-based dissociation (rec. 3) + subspace-
-  targeted, cross-validated encoding (rec. 4). Report the v²/amplitude scaling.
+| regressor added | ΔR²_even (nonlinear) | ΔR²_even (linear null) | ratio |
+|---|---|---|---|
+| Coriolis `C` | 0.041 | 0.002 | 19× |
+| inertia variation `dM·theta_ddot` | **0.147** | 0.004 | **37×** |
+| both | 0.160 | 0.007 | 24× |
+
+**The null problem, solved.** The linearized arm above is not available in a real
+experiment — but you do not need it. **Cross-validation is the null**: regressors
+that carry no information make held-out prediction *worse*, so ΔR² ≤ 0. Simulating
+Poisson spikes on top of the model confirms it — the linearized arm's ΔR²_even is
+**negative at every trial count**, while the nonlinear arm's turns positive:
+
+| trials/direction | nonlinear arm | linear arm (null) |
+|---|---|---|
+| 10 | −0.015 ± 0.003 | −0.027 ± 0.002 |
+| 20 | −0.000 ± 0.003 | −0.025 ± 0.002 |
+| **50** | **+0.031 ± 0.003** | −0.020 ± 0.002 |
+| 100 | +0.063 ± 0.004 | −0.015 ± 0.001 |
+| 200 | +0.097 ± 0.004 | −0.009 ± 0.001 |
+
+(100 neurons, 24 directions, 20 ms bins, 20 Hz baseline, 8 Hz modulation SD;
+`predictions.power_curve`.) **A reliably positive ΔR²_even is the result.**
+~50 trials/direction is where it turns; 20 is marginal.
+
+---
+
+# Experimental protocol (M1 + kinematics, center-out)
+
+## Start here: the KINEMATIC prediction (no regression, no ΔR²)
+
+`predictions.linear_internal_model_error` takes the **linear** controller's motor
+commands and sends them to the **real nonlinear** arm — a brain whose internal
+model ignores interaction torques. The cost is a plain distance in cm
+(`fig_kinematic_prediction.png`):
+
+| condition | peak speed | endpoint error | % of reach | error **even** share | opposite-error cosine |
+|---|---|---|---|---|---|
+| 12 cm / 0.50 s | 0.45 m/s | 1.42 cm | 12 % | 97 % | **+0.96** |
+| 20 cm / 0.35 s | 1.17 m/s | **4.14 cm** | **21 %** | 92 % | **+0.90** |
+
+**The signature (K1).** The error is **91–99 % direction-EVEN**: reaches to
+*opposite* targets are pushed in the **same spatial direction**, not mirror-image.
+Ordinary motor errors — gain, bias, noise, a mis-calibrated hand position — are
+**odd** (mirror-image for opposite reaches). Nothing else in motor control makes
+an even error pattern. Metric: for each opposite pair, the cosine between the two
+endpoint-error vectors. Even ⇒ +1, odd ⇒ −1.
+
+**The design (K2): matched peak speed, varying amplitude.** Coriolis ~ D²/T²
+and inertial ~ D/T², so their ratio ~ D while peak speed is held fixed (scale T
+with D). The compensation required then grows **linearly with amplitude**:
+
+| amplitude | duration | peak speed | error a linear model would make |
+|---|---|---|---|
+| 8 cm | 0.27 s | 0.57 m/s | 0.67 cm = **8.3 %** of reach |
+| 12 cm | 0.41 s | 0.56 m/s | 1.46 cm = **12.2 %** |
+| 16 cm | 0.54 s | 0.56 m/s | 2.52 cm = **15.8 %** |
+| 20 cm | 0.68 s | 0.58 m/s | 3.80 cm = **19.0 %** |
+
+Note this does **not** work at fixed amplitude: there `theta_ddot ~ D/T² ~ v²`,
+so inertial and Coriolis both scale as v² and never separate. Amplitude at
+matched speed is the only cheap dissociation.
+
+**How to turn a counterfactual into an experiment.** Real reaches are accurate,
+so you will not see 4 cm errors — the brain compensates. Three usable versions:
+
+1. **Residual-error signature (cheapest; works on data you may already have).**
+   Reaches are accurate but not perfect. Decompose endpoint errors (or peak
+   lateral deviations) into even/odd across opposite directions, and **correlate
+   the observed even-error map with the model-predicted one**. Prediction: they
+   correlate, and the even component grows ~ D at matched speed while the odd
+   component does not. This measures *residual under-compensation* — 5 %
+   incomplete compensation still gives ~0.2 cm of even error at 20 cm.
+2. **Calibration for the neural search.** The compensation is worth **21 % of the
+   movement** at 1.17 m/s. That is not a subtle correction — it justifies
+   expecting a real M1 signal and sets the effect size.
+3. **Perturbation (gold standard).** Loads / velocity-dependent force fields;
+   `iLQG_Combined.compute_forcefield` already exists but is unused by the
+   center-out path.
+
+## The one analysis to run
+
+1. Trial-average firing rates per direction × time (20 ms bins). Measure hand
+   kinematics; get `theta, theta_dot` by IK and `theta_ddot` by differentiating
+   *smoothed* joint angles.
+2. Build the interaction-torque regressors from **your subject's** limb model:
+   `C(theta, theta_dot)` and `dM(theta_2)·theta_ddot`.
+3. Average opposite directions: `r_even(theta) = [r(theta) + r(theta+pi)]/2`,
+   and **do the same to every regressor** (averaging only the rates and
+   regressing on un-averaged regressors is a different, wrong model).
+4. Cross-validated encoding (leave-one-direction-pair-out): linear-kinematics
+   model `[1, theta, theta_dot, theta_ddot]` vs that model **+ the two
+   interaction-torque regressors**. Report ΔR²_even.
+5. **ΔR²_even > 0, reliably ⇒ the controller generates torques a linear internal
+   model cannot.** `predictions.term_dr2(..., even=True)` is the implementation.
+
+## Predictions, ranked
+
+| # | prediction | model value | how to test |
+|---|---|---|---|
+| **P1** | ΔR²_even > 0 for the interaction torques | +0.03 @ 50 trials, +0.06 @ 100 | the analysis above; sign is the null |
+| **P2** | `dM·theta_ddot` beats Coriolis | 0.147 vs 0.041 (**3.6×**) | fit each regressor separately |
+| **P3** | ΔR²_even grows with **speed**, same targets | 0.100 (0.37 m/s) → **0.204** (0.90 m/s) | instruct fast vs slow blocks; within-session |
+| **P4** | amplitude at **matched speed** does *not* help | \|C\|/\|tau\| 9.7→22.6 % but ΔR² 0.054→**0.040** | amplitude × speed grid |
+| **P5** | the violation is ~**96 % direction-even** | 95.5–95.9 % across speeds | even/odd split of the residual |
+
+**P3 is the best experiment**: same targets, same session, only speed changes, and
+the model says the effect roughly **doubles** while the linear null stays flat
+(0.018 → 0.013). It needs no cross-session comparison and no load hardware.
+
+**P4 is the sharpest falsifier**: it is counter-intuitive (bigger reaches have
+proportionally more Coriolis *torque*) and the model says neural detectability
+still does not improve. If ΔR²_even *does* grow with amplitude at matched speed,
+this model is wrong.
+
+## Why the neural side needs the regression (simple metrics fail)
+
+The kinematic test above is simple. The **neural** one is not, and it is worth
+knowing why before reaching for something easier. Measured at 20 cm / 0.35 s:
+
+| simple metric | nonlinear | linear | verdict |
+|---|---|---|---|
+| 2nd harmonic of tuning, h2 | 2.014 | 3.119 | **backwards** (0.65×) |
+| h2/h1 ratio | 0.138 | 0.208 | **backwards** |
+| even/odd ratio of activity, D=8→20 cm | 0.083→0.321 | 0.102→0.262 | crosses over — no clean split |
+| h0/h1 (condition-invariant share) | 0.144 | 0.111 | 1.30× — weak, and confounded by the real CIS |
+
+The 2nd harmonic is **lower** in the nonlinear model, not higher: the linear
+baseline inherits a *bigger* one from the nonlinear inverse kinematics. So
+"look for a 2nd harmonic in directional tuning" is **not** a valid test — and
+neither is the even/odd ratio, which crosses over with amplitude.
+
+The reason simple harmonic measures fail is the same throughout this project: the
+IK curve `xtarg(theta)` puts even/2nd-harmonic structure into a *linear*
+controller's activity for free. Only a model that explicitly asks for the
+**interaction-torque regressors**, cross-validated, separates "even structure
+from task geometry" from "even structure from arm dynamics". That is what
+ΔR²_even buys, and why it is worth the complexity.
+
+## Negative controls — these should show nothing
+
+Report them; they are what makes P1–P5 interpretable.
+
+* **Preferred directions.** PD distribution, bimodality, and axis are *not*
+  diagnostic — a frozen-inertia linear plant reproduces them (see
+  `README_iLQG.md`). PD reads the 1st harmonic; the nonlinearity is even.
+* **PCA dimensionality.** Effective rank 2.51 vs 2.46 — blind to this.
+* **Cross-validated rank selection.** Theoretically beautiful (a linear policy is
+  capped at rank 3 forever) but **not viable**: with Poisson noise, CV returns
+  k\* = 3 for *both* plants even at 200 trials/direction. Do not build the paper
+  on it.
+* **Peak-speed-locked activity.** Do not expect it. The *torques* separate
+  cleanly, but the neural residual peaks near peak **acceleration** (311 ms vs
+  peak speed 206 ms; corr with v² = −0.54).
+
+## Before trusting any of these numbers
+
+* ⚠️ **The limb model here is HUMAN** (`l1 = 0.30 m, l2 = 0.33 m`, 63 cm reach).
+  `a2 = m2·l1·s2 = 0.048` is the single scalar setting both interaction-torque
+  magnitudes. A macaque (Cheng & Scott 2000, `l1 ≈ 0.17`, `l2 ≈ 0.19`) gives
+  `a2 ≈ 0.008` — **~16 %** of the human value at matched joint speed. For a
+  monkey experiment, **re-run the model with macaque parameters** and regenerate
+  this table; do not rescale by eye (reach amplitudes shrink too).
+* The model has **no preparatory epoch, no feedback, no motor noise**. Real M1
+  carries a large condition-invariant signal (Kaufman et al.) that lives in the
+  even component and is *not* in this model. It cannot mimic the regressors
+  (which are direction-dependent through `theta_2` and `omega`), but it will add
+  even-component variance and dilute ΔR²_even. Consider regressing out the
+  condition-invariant (direction-averaged) component first and reporting both.
+* Effect sizes come from **one** network (`gaussian_networks.hdf5`, #2) and one
+  set of noiseless trajectories. Repeat across networks before publishing.
+* Real reaches vary trial to trial; the model's do not. Use single-trial
+  kinematics for the regressors where possible rather than the condition mean.

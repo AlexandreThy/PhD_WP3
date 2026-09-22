@@ -90,7 +90,6 @@ def fx(x, u):
         The Jacobian Matrix of the dynamic of the system around the state x
     """
     m = len(x) - 6
-    q = x[:-6]
     theta1, theta2, dtheta1, dtheta2,torque1,torque2 = x[-6:]
     torque = np.array([torque1,torque2])
     # Baseline linear plant: freeze inertia at THETA2_REF, drop Coriolis terms.
