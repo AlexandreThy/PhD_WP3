@@ -29,7 +29,7 @@ G_NET = 0.8  # fully connected random network, W ~ N(0, g^2 / n)
 _rng = np.random.default_rng(0)
 W_NET = _rng.normal(0, G_NET / np.sqrt(N_NET), (N_NET, N_NET))
 WOUT = _rng.normal(0, 0.5, (N_MUSCLES, N_NET))
-EPS_NET = _rng.normal(0, 5, N_NET)  # constant input -> heterogeneous spontaneous activity
+EPS_NET = _rng.normal(0, 5, N_NET)*0  # constant input -> heterogeneous spontaneous activity
 J_NET = (W_NET - np.identity(N_NET)) / TAU_NET
 
 
