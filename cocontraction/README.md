@@ -32,7 +32,7 @@ La jacobienne analytique `fx` est vérifiée par différences finies (erreur max
 ## Utilisation
 
 ```bash
-python centerout_muscle.py        # résout 8 cibles, cache centerout_muscle.npz
+python centerout_muscle.py        # résout 8 cibles, cache ../data/centerout_muscle.npz
 python cocontraction_analysis.py  # figure fig_cocontraction.png + métriques
 ```
 

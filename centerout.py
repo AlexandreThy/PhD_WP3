@@ -25,10 +25,17 @@ K = 100                # time steps (dt = 5 ms)
 W1, W2, R1 = 1e4, 10.0, 1e-5   # terminal-pos, terminal-vel, effort costs
 N_DIR = 8              # number of radial targets
 
-CACHE = os.path.join(
-    os.environ.get("CENTEROUT_CACHE_DIR", os.path.dirname(os.path.abspath(__file__))),
-    "centerout_data.npz",
+# every .npz cache of the project lives in data/ (override with CENTEROUT_CACHE_DIR)
+DATA_DIR = os.environ.get(
+    "CENTEROUT_CACHE_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "data"),
 )
+CACHE = os.path.join(DATA_DIR, "centerout_data.npz")
+
+
+def data_path(path):
+    """A bare file name resolves into DATA_DIR; a path with a directory is kept."""
+    return path if os.path.dirname(path) else os.path.join(DATA_DIR, path)
 
 
 def target_positions(n_dir=N_DIR, center=CENTER, radius=RADIUS):
@@ -81,12 +88,14 @@ def run(n_dir=N_DIR, duration=DURATION, K=K, w1=W1, w2=W2, r1=R1,
 
 
 def save(data, path=CACHE):
+    path = data_path(path)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     np.savez_compressed(path, **data)
     print("saved", path)
 
 
 def load(path=CACHE):
-    d = np.load(path, allow_pickle=True)
+    d = np.load(data_path(path), allow_pickle=True)
     return {k: d[k] for k in d.files}
 
 

@@ -40,7 +40,7 @@ def main():
     dsig = np.array([r[0] for r in dres]); dcc = np.array([r[1] for r in dres])
 
     # cached network sweep
-    net = list(np.load(os.path.join(_HERE, "uncertainty_sweep.npz"), allow_pickle=True)["res"])
+    net = list(np.load(os.path.join(_HERE, os.pardir, "data", "uncertainty_sweep.npz"), allow_pickle=True)["res"])
     net = [r for r in net if not r["nan"]]
     nsig = np.array([r["sigma"] for r in net]); ncc = np.array([r["cc"] for r in net])
 

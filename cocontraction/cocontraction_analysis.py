@@ -23,7 +23,7 @@ PAIRS = [("shoulder", 0, 1), ("elbow", 2, 3), ("bi-articular", 4, 5)]
 
 
 def load():
-    d = np.load(os.path.join(_HERE, "centerout_muscle.npz"), allow_pickle=True)
+    d = np.load(os.path.join(_HERE, os.pardir, "data", "centerout_muscle.npz"), allow_pickle=True)
     return {k: d[k] for k in d.files}
 
 

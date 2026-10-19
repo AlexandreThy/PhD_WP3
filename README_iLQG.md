@@ -30,6 +30,7 @@ starts at rest (`r = 0`).
 | file | purpose |
 |------|---------|
 | `iLQG_Combined.py` | dynamics `f`, analytic Jacobians `fx`/`fu`, iLQG passes (`step1`–`step4`), `simulate_ILQG`. Also a `LINEARIZE` flag that freezes the arm to a linear plant (baseline). |
+| `data/` | every `.npz` cache of the project (center-out, prep, prediction sweep, cocontraction, random environment). A bare `--out name.npz` is written there. |
 | `hdf.py` | loads `J` (=`W`) and `C` (=`Wout`) from `gaussian_networks.hdf5`. |
 | `centerout.py` | solves the N-target center-out task and caches trajectories. `--linear` uses the linear-arm baseline. |
 | `figures.py` | reproduces Fig 2a (kinematics), 2b (node activity), 2d (movement-epoch PCA / rotations). |
@@ -317,3 +318,32 @@ python centerout.py --n_dir 24 --radius 20 --duration 0.35 --center 0 40 \
        --out centerout_lin24_big.npz --tol 1e-4 --linear
 python analysis.py --nl centerout_nl24_big.npz --lin centerout_lin24_big.npz
 ```
+
+## Can the network alone bias the PDs? (`network_pd_bias.py`)
+
+All plants here are linear (isotropic point mass, frozen-inertia arm), so the
+iLQG optimum is solved **in closed form** (`u_k = Phi_k^T lam`); validated on
+`data/centerout_lin24.npz` (exact cost lower on 24/24 targets, iLQG 0.06 % above,
+median node PD difference 0.7 deg). All 50 networks of the HDF5 share **one**
+readout, nearly isotropic (cond(Wout Wout^T) = 1.13), so differences between
+networks come from `J` only. PD epoch = movement onset -> peak speed (Lillicrap
+& Scott); `python network_pd_bias.py` (~10 s) -> `fig_network_pd_bias.png`.
+
+| isotropic point mass | no recurrence | g=0.4 | 0.6 | 0.7 | 0.8 | 1.1 |
+|---|---|---|---|---|---|---|
+| median bimodal r (p<.05 needs 0.17) | 0.05 | 0.06 | 0.10 | 0.10 | 0.16 | 0.31 |
+| networks with significant bias | – | 0/10 | 0/10 | 2/10 | 4/10 | 8/10 |
+| node PD drift, accel -> decel | 0° | 8° | 14° | 21° | 26° | 61° |
+| same, linear arm | 5° | 7° | 11° | 14° | 18° | 66° |
+
+* The bias axis is network-specific (random across networks) but predicted
+  without simulation by `P Wout^T (Wout P Wout^T)^-1` (P = controllability
+  Gramian): median axis error 16° at g=0.8 (chance 45°); fails at g=1.1.
+  `Q J Q^T` (same spectrum, new alignment) gives the same bias strength.
+* Small-network effect: synthetic networks at g=0.8 give r = 0.21 (N=100) but
+  0.06 at N=300 and N=1000 (threshold level).
+* Linear arm: biomechanics fixes the axis (-29° without recurrence); the
+  network shifts it, range across the 10 networks 7° wide at g=0.4, 35° at 0.8.
+* Caveat: the whole-movement mean used by `analysis.fig_pd` sums a push and a
+  brake of opposite sign; it inflates the network bias (r=0.26 at g=0.8) and
+  does not shrink with N (0.14 at N=1000). Prefer the onset -> peak epoch.

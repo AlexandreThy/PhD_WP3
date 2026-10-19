@@ -34,7 +34,7 @@ import iLQG_Combined as M
 import centerout as CO
 
 a2 = M.a2
-CACHE = "predictions_sweep.npz"
+CACHE = CO.data_path("predictions_sweep.npz")
 
 # (amplitude cm, duration s) chosen to sweep peak hand speed ~0.3 - ~1.1 m/s
 CONDITIONS = [(10, 0.60), (12, 0.50), (15, 0.42), (18, 0.38), (22, 0.34)]

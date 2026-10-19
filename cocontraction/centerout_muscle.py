@@ -14,7 +14,7 @@ RADIUS = 12.0
 DURATION = 0.5
 K = 100
 N_DIR = 8
-CACHE = os.path.join(_HERE, "centerout_muscle.npz")
+CACHE = os.path.join(_HERE, os.pardir, "data", "centerout_muscle.npz")
 
 
 def _solve(args):

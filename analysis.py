@@ -366,7 +366,7 @@ if __name__ == "__main__":
                    help="linear-arm baseline cache")
     args = p.parse_args()
 
-    d = CO.load(args.nl) if os.path.exists(args.nl) else CO.load()
-    dlin = CO.load(args.lin) if os.path.exists(args.lin) else None
+    d = CO.load(args.nl) if os.path.exists(CO.data_path(args.nl)) else CO.load()
+    dlin = CO.load(args.lin) if os.path.exists(CO.data_path(args.lin)) else None
     fig_pd(d, dlin)
     fig_nonlinearity(d, dlin)

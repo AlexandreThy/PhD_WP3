@@ -23,6 +23,7 @@ lacks (there every condition starts at r = 0, giving a jPCA rosette).
 import numpy as np
 
 import iLQG_Combined as base
+from centerout import data_path
 from iLQG_Combined import (
     W, Wout, f, fx, fu, hand_xy, compute_angles_from_cartesian,
 )
@@ -198,12 +199,13 @@ def run(n_dir=8, center=(0.0, 40.0), radius=20.0, linearize=False, tol=1e-4,
 
 
 def save(data, path):
+    path = data_path(path)
     np.savez_compressed(path, **data)
     print("saved", path)
 
 
 def load(path):
-    d = np.load(path, allow_pickle=True)
+    d = np.load(data_path(path), allow_pickle=True)
     return {k: d[k] for k in d.files}
 
 

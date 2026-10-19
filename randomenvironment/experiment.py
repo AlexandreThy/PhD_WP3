@@ -16,7 +16,7 @@ sys.path.insert(0, _HERE)
 SIGMAS = [0.0, 1.0, 2.0, 3.0, 4.0]
 M_WORLDS = 3
 K = 80
-CACHE = os.path.join(_HERE, "uncertainty_sweep.npz")
+CACHE = os.path.join(_HERE, os.pardir, "data", "uncertainty_sweep.npz")
 
 
 def run():
