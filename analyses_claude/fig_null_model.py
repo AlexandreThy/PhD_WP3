@@ -13,8 +13,8 @@ proj = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.dirname(os.
 sys.path.insert(0, proj)
 import predictions
 
-nl = np.load(f"{proj}/centerout_nl24_big.npz", allow_pickle=True)
-li = np.load(f"{proj}/centerout_lin24_big.npz", allow_pickle=True)
+nl = np.load(f"{proj}/data/centerout_nl24_big.npz", allow_pickle=True)
+li = np.load(f"{proj}/data/centerout_lin24_big.npz", allow_pickle=True)
 N = int(nl["N"])
 t = nl["t"] * 1000
 

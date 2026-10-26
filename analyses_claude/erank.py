@@ -52,7 +52,7 @@ def measures(r):
 
 
 def activity(fname, epoch):
-    d = np.load(os.path.join(PROJ, fname), allow_pickle=True)
+    d = np.load(os.path.join(PROJ, "data", fname), allow_pickle=True)
     N = int(d["N"])
     r = d["states"][:, :, :N]
     if epoch == "move" and "k_prep" in d.files:
