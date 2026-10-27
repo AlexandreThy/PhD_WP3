@@ -22,6 +22,14 @@ import compare3 as C  # noqa: E402
 import signatures as S  # noqa: E402
 
 NETS = [(0, 10), (1, 11), (3, 13), (4, 14), (5, 15), (6, 16)]   # (network, Wout seed)
+# all 10 g=0.8 networks of the HDF5, each with two readouts (contains NETS)
+NETS20 = [(n, 10 + n) for n in range(10)] + [(n, 20 + n) for n in range(10)]
+
+
+def netkey(n, s):
+    """Cache key of a (network, Wout seed) pair; the original pairs keep the bare
+    network index so that existing caches stay readable."""
+    return f"{n}" if s == 10 + n else f"{n}-{s}"
 MODELS = ("lin6", "nl6")
 TARGETS = np.arange(0, C.N_DIR, 3)                               # 8 targets
 

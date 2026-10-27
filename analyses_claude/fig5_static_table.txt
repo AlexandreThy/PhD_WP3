@@ -1,0 +1,23 @@
+=== bras ls_printed, |y*| = 1, H par muscle (moyenne sur cibles) [1.01 0.78 1.07 0.93 1.03 0.89]
+1  2D point mass                   unités θ=  67.3 r=0.01 (n.s.)  [L&S n.s.]  accordées 100%  err 9.8e-07
+2  + geometry                      unités θ= 108.3 r=0.63  [L&S 108.8 0.61]  accordées 100%  err 8.6e-05
+3  + intersegmental dynamics       unités θ= 169.8 r=0.39  [L&S 131.4 0.67]  accordées 100%  err 1.1e-04
+4  + monoarticular muscles         unités θ= 170.1 r=0.41  [L&S 131.4 0.67]  accordées 89%  err 9.8e-03 | muscles θ=   4.7 r=0.57 [L&S 165.0 0.27]
+5  + biarticular muscles           unités θ= 154.7 r=0.28  [L&S 127.9 0.65]  accordées 91%  err 5.0e-03 | muscles θ= 157.0 r=0.20 [L&S 122.9 0.58]
+6  + muscle mechanics              unités θ= 150.5 r=0.27  [L&S 99.7 0.44]  accordées 91%  err 7.4e-03 | muscles θ= 146.1 r=0.24 [L&S 103.8 0.71]
+
+=== bras ls_cs, |y*| = 1, H par muscle (moyenne sur cibles) [1.01 0.78 1.07 0.93 1.03 0.89]
+1  2D point mass                   unités θ=  67.3 r=0.01 (n.s.)  [L&S n.s.]  accordées 100%  err 1.8e-08
+2  + geometry                      unités θ= 113.7 r=0.72  [L&S 108.8 0.61]  accordées 100%  err 2.6e-06
+3  + intersegmental dynamics       unités θ= 135.8 r=0.59  [L&S 131.4 0.67]  accordées 100%  err 2.5e-06
+4  + monoarticular muscles         unités θ= 135.6 r=0.58  [L&S 131.4 0.67]  accordées 90%  err 2.4e-04 | muscles θ= 169.5 r=0.32 [L&S 165.0 0.27]
+5  + biarticular muscles           unités θ= 127.8 r=0.63  [L&S 127.9 0.65]  accordées 91%  err 1.7e-04 | muscles θ= 124.1 r=0.72 [L&S 122.9 0.58]
+6  + muscle mechanics              unités θ= 126.9 r=0.62  [L&S 99.7 0.44]  accordées 91%  err 2.5e-04 | muscles θ= 124.7 r=0.73 [L&S 103.8 0.71]
+
+=== bras cheng_scott, |y*| = 1, H par muscle (moyenne sur cibles) [1.01 0.78 1.08 0.93 1.04 0.89]
+1  2D point mass                   unités θ=  67.3 r=0.01 (n.s.)  [L&S n.s.]  accordées 100%  err 2.0e-08
+2  + geometry                      unités θ= 113.5 r=0.67  [L&S 108.8 0.61]  accordées 100%  err 3.7e-06
+3  + intersegmental dynamics       unités θ= 139.3 r=0.57  [L&S 131.4 0.67]  accordées 100%  err 3.9e-06
+4  + monoarticular muscles         unités θ= 139.9 r=0.57  [L&S 131.4 0.67]  accordées 90%  err 3.7e-04 | muscles θ= 170.2 r=0.39 [L&S 165.0 0.27]
+5  + biarticular muscles           unités θ= 130.5 r=0.59  [L&S 127.9 0.65]  accordées 91%  err 2.5e-04 | muscles θ= 125.7 r=0.66 [L&S 122.9 0.58]
+6  + muscle mechanics              unités θ= 129.4 r=0.58  [L&S 99.7 0.44]  accordées 91%  err 3.7e-04 | muscles θ= 126.1 r=0.67 [L&S 103.8 0.71]

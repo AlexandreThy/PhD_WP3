@@ -1,0 +1,14 @@
+1  2D point mass                               pooled θ= 162.6 r=0.04 CI95 [ 98.5,  52.9] | original 6 nets θ= 176.5 | per-network θ: mean  153.5, concentration 0.20, sig 4/20
+       12    22   141   163   136   110    22   155    40    64    75   165    88   176   144    26    79   133   128   132
+2  + geometry                                  pooled θ= 103.6 r=0.57 CI95 [102.0, 105.2] | original 6 nets θ= 104.9 | per-network θ: mean  103.7, concentration 0.99, sig 20/20
+      110   109   112   105   104   101   102   103   101   102   102   105    98   103   104   105    97   101   104   106
+3  + intersegmental dynamics                   pooled θ= 124.2 r=0.13 CI95 [115.8, 134.8] | original 6 nets θ= 131.0 | per-network θ: mean  124.1, concentration 0.75, sig 5/20
+      148   150   144   127   119   115   112   111   134   123   132   119   104   118   120   162    80    94   113   173
+4  + monoarticular muscles                     pooled θ= 109.5 r=0.12 CI95 [100.9, 120.0] | original 6 nets θ= 106.7 | per-network θ: mean  112.9, concentration 0.64, sig 1/20
+      150   104   129   157   105   104    87   128     5    92    84   114    98   107   119    66   101   125   152   114
+5  + biarticular muscles                       pooled θ= 104.7 r=0.31 CI95 [102.1, 107.7] | original 6 nets θ= 106.6 | per-network θ: mean  104.9, concentration 0.96, sig 14/20
+      109   108   109   128   102   103    90   112    93    97   102   104   104   100   104   107   100    97   121   109
+6  + muscle mechanics (FLV instantanée)        pooled θ= 102.4 r=0.34 CI95 [ 99.9, 104.7] | original 6 nets θ= 103.4 | per-network θ: mean  102.6, concentration 0.97, sig 15/20
+       96   108   101   117   102   104    87   109    94    97    98   104   108   100   102   106    97   109   109   104
+6'  + muscle mechanics (FLV moyenne, comme L&S) pooled θ= 102.0 r=0.34 CI95 [ 99.7, 104.3] | original 6 nets θ= 103.2 | per-network θ: mean  101.8, concentration 0.98, sig 15/20
+       97   108   102   117   101   103    88   108    97    96    99   103   108   100   102   104    98    95   103   107

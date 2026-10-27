@@ -1,0 +1,12 @@
+centre-out, départ (0.0, 40.0) cm, 15 cm, 0.4 s, 16 cibles
+                        poussent+tirent  tirent seulement
+vitesse pic (m/s)      0.660 [0.63-0.67] 0.653 [0.61-0.71]
+instant du pic (ms)       214 [175-250]     220 [170-275]
+courbure (% amplitude) 7.63 [max 17.07]  6.63 [max 17.99]
+tension / couple       62.5 [50.9-75.5] 94.1 [76.1-122.2]
+effort (u-u*)^2                   1.071             3.538
+erank couple                       1.77              1.78
+erank activations                  2.57              3.76
+complexité temporelle  1.8 2.0 2.4 2.4 2.4 2.1 3.0 3.2 4.4 4.3 3.8 3.1
+écart max des trajectoires de main entre modèles : 0.96 cm en moyenne, 4.24 cm au pire
+écart max des couples articulaires (relatif au pic) : 23.7 % en moyenne, 42.4 % au pire

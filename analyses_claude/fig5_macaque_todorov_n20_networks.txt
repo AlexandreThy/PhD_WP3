@@ -1,0 +1,14 @@
+1  2D point mass                               pooled θ= 162.6 r=0.04 CI95 [ 98.5,  52.9] | original 6 nets θ= 176.5 | per-network θ: mean  153.5, concentration 0.20, sig 4/20
+       12    22   141   163   136   110    22   155    40    64    75   165    88   176   144    26    79   133   128   132
+2  + geometry                                  pooled θ= 107.3 r=0.65 CI95 [106.1, 108.4] | original 6 nets θ= 108.5 | per-network θ: mean  107.2, concentration 1.00, sig 20/20
+      110   114   108   108   106   107   108   108   108   106   101   109   101   110   109   109   106   107   104   108
+3  + intersegmental dynamics                   pooled θ= 167.1 r=0.28 CI95 [162.1, 171.6] | original 6 nets θ= 164.4 | per-network θ: mean  166.4, concentration 0.93, sig 16/20
+      168   170   154   162   149   164   164   148   177     1     8   150   178   167   156   171   179   168   165   170
+4  + monoarticular muscles                     pooled θ= 170.4 r=0.25 CI95 [165.3, 176.3] | original 6 nets θ= 172.4 | per-network θ: mean  171.5, concentration 0.87, sig 12/20
+      169   161   166     1   175   169    10   163     5     6   147   150     8   155   162    14    21   163   166   163
+5  + biarticular muscles                       pooled θ= 134.0 r=0.18 CI95 [124.2, 143.9] | original 6 nets θ= 146.3 | per-network θ: mean  136.1, concentration 0.75, sig 6/20
+      144   163   124   159   141   119   169   154   160    95   146   110   111   147   136   111   102   133   153   131
+6  + muscle mechanics (FLV instantanée)        pooled θ= 118.2 r=0.21 CI95 [113.3, 124.1] | original 6 nets θ= 120.1 | per-network θ: mean  118.2, concentration 0.90, sig 7/20
+      136   132   119   118   118   111    97   128    91   100   131   108   112   126   122   119   104   121   144   124
+6'  + muscle mechanics (FLV moyenne, comme L&S) pooled θ= 113.9 r=0.22 CI95 [108.9, 119.8] | original 6 nets θ= 115.2 | per-network θ: mean  113.8, concentration 0.91, sig 9/20
+      128   133   115   110   106   110    96   120    97    97   128   106   108   123   118   105   101   114   141   121

@@ -29,7 +29,7 @@ sys.path.insert(0, HERE)
 
 import compare3 as C  # noqa: E402
 import signatures as S  # noqa: E402
-from net_variability import NETS  # noqa: E402
+from net_variability import NETS, netkey  # noqa: E402
 
 RUNGS = [("pm", "1  2D point mass"), ("geo", "2  + geometry"),
          ("nl2", "3  + intersegmental\ndynamics"), ("mono", "4  + monoarticular\nmuscles"),
@@ -66,21 +66,22 @@ def simulate(jobs=14):
         for m, _ in RUNGS:
             for n, s in NETS:
                 sel = sorted((r for r in res if r[0][:4] == (rg, m, n, s)), key=lambda r: r[0][4])
-                out[f"{rg}|{m}|{n}|r"] = np.stack([x[1] for x in sel]).astype(np.float32)
-                out[f"{rg}|{m}|{n}|a"] = np.stack([x[2] for x in sel]).astype(np.float32)
-                out[f"{rg}|{m}|{n}|hand"] = np.stack([x[3] for x in sel])
-                out[f"{rg}|{m}|{n}|err"] = max(x[4] for x in sel)
+                k = netkey(n, s)
+                out[f"{rg}|{m}|{k}|r"] = np.stack([x[1] for x in sel]).astype(np.float32)
+                out[f"{rg}|{m}|{k}|a"] = np.stack([x[2] for x in sel]).astype(np.float32)
+                out[f"{rg}|{m}|{k}|hand"] = np.stack([x[3] for x in sel])
+                out[f"{rg}|{m}|{k}|err"] = max(x[4] for x in sel)
     np.savez_compressed(CACHE, **out)
 
 
-def pmds(z, rg, m, key):
-    """PMDs (rad) of units ('r') or muscles ('a') pooled over networks, plus the
-    muscle index of each PMD for 'a'."""
+def pmds(z, rg, m, key, nets=None):
+    """PMDs (rad) of units ('r') or muscles ('a') pooled over networks (default:
+    all of NETS), plus the muscle index of each PMD for 'a'."""
     dur = C.DURATIONS[rg]
     pds, idx = [], []
-    for n, _ in NETS:
-        y = z[f"{rg}|{m}|{n}|{key}"]
-        hand = z[f"{rg}|{m}|{n}|hand"]
+    for n, s in (NETS if nets is None else nets):
+        y = z[f"{rg}|{m}|{netkey(n, s)}|{key}"]
+        hand = z[f"{rg}|{m}|{netkey(n, s)}|hand"]
         v = np.gradient(hand, dur / (y.shape[1] - 1), axis=1)
         kp = int(np.argmax(np.linalg.norm(v, axis=-1).mean(0)))
         pd, _, r2 = S.cosine_fit(S.epoch_mean(y, 1, kp + 1), ANG)
@@ -171,7 +172,7 @@ def figure(z, rg, suffix=""):
     fig.text(0.005, 0.30, "B  centre-out\nPMD des muscles\n\n● mono épaule\n◆ mono coude\n△ biarticulaires",
              fontsize=9)
     fig.suptitle(f"Fig. 5 de Lillicrap & Scott (centre-out) refaite avec iLQG en boucle fermée — "
-                 f"{C.RADIUS:.0f} cm / {C.DURATIONS[rg]:.2f} s, 6 réseaux, 16 cibles{TITLE_EXTRA}",
+                 f"{C.RADIUS:.0f} cm / {C.DURATIONS[rg]:.2f} s, {len(NETS)} réseaux, 16 cibles{TITLE_EXTRA}",
                  fontsize=11)
     fig.tight_layout(rect=(0.06, 0, 1, 0.95))
     out = os.path.join(HERE, f"fig5_overlay_{rg}{suffix}.png")
@@ -185,7 +186,7 @@ def main():
     z = np.load(CACHE)
     for rg in C.REGIMES:
         print(rg, "max endpoint err (cm):",
-              {m: round(max(float(z[f'{rg}|{m}|{n}|err']) for n, _ in NETS), 4) for m, _ in RUNGS})
+              {m: round(max(float(z[f'{rg}|{m}|{netkey(n, s)}|err']) for n, s in NETS), 4) for m, _ in RUNGS})
         figure(z, rg)
 
 

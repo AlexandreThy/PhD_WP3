@@ -1,0 +1,14 @@
+1  2D point mass                               pooled θ= 162.6 r=0.04 CI95 [ 98.5,  52.9] | original 6 nets θ= 176.5 | per-network θ: mean  153.5, concentration 0.20, sig 4/20
+       12    22   141   163   136   110    22   155    40    64    75   165    88   176   144    26    79   133   128   132
+2  + geometry                                  pooled θ= 104.2 r=0.64 CI95 [103.1, 105.4] | original 6 nets θ= 105.5 | per-network θ: mean  104.2, concentration 1.00, sig 20/20
+      108   107   110   108   105   103   103   105    99   104   102   107   101   103   104   103   101   103   105   105
+3  + intersegmental dynamics                   pooled θ= 103.6 r=0.32 CI95 [100.8, 106.1] | original 6 nets θ= 106.9 | per-network θ: mean  104.2, concentration 0.98, sig 15/20
+      110   117   114   109   104   103   101   106    93   102   108   108    99    93   104   109    95   101   102   105
+4  + monoarticular muscles                     pooled θ= 103.1 r=0.36 CI95 [100.0, 106.1] | original 6 nets θ= 100.3 | per-network θ: mean  102.7, concentration 0.96, sig 18/20
+       97   105   105   111    91   102    94   112    93   100    97   109   106   104   109    85   103   105   118   108
+5  + biarticular muscles                       pooled θ= 102.2 r=0.55 CI95 [100.4, 103.9] | original 6 nets θ= 101.4 | per-network θ: mean  102.2, concentration 0.99, sig 20/20
+       98   104   101   107   101   103    94   106    97    94   103   103   100   105   104   102   103   101   115   103
+6  + muscle mechanics (FLV instantanée)        pooled θ= 102.1 r=0.55 CI95 [100.4, 103.6] | original 6 nets θ= 101.7 | per-network θ: mean  102.0, concentration 0.99, sig 20/20
+       97   104   100   105   103   104    94   106    97    95   104   102    98   106   104   102   102   101   111   103
+6'  + muscle mechanics (FLV moyenne, comme L&S) pooled θ= 102.0 r=0.55 CI95 [100.3, 103.6] | original 6 nets θ= 101.6 | per-network θ: mean  101.9, concentration 0.99, sig 20/20
+       97   104   100   106   103   104    94   106    97    95   104   103    97   106   104   102   102    99   112   103

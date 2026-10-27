@@ -28,7 +28,7 @@ sys.path.insert(0, HERE)
 
 import compare3 as C  # noqa: E402
 import fig5_overlay as F  # noqa: E402
-from net_variability import NETS  # noqa: E402
+from net_variability import NETS, netkey  # noqa: E402
 
 M = C.M
 CACHE = os.path.join(HERE, "sims", "fig5_meanflv.npz")
@@ -48,10 +48,10 @@ class MeanFLVPlant(C.JointPlant):
         return self.moment_m @ tension, (z, z, self.moment_m * (M.F_MAX * self.h_flv))
 
 
-def mean_flv(z, rg, n):
-    """H (16 targets, 6 muscles) from the full-model (nl6) solution."""
+def mean_flv(z, rg, k):
+    """H (16 targets, 6 muscles) from the full-model (nl6) solution of network key k."""
     dur = C.DURATIONS[rg]
-    hand = z[f"{rg}|nl6|{n}|hand"]                           # (16, K+1, 2)
+    hand = z[f"{rg}|nl6|{k}|hand"]                           # (16, K+1, 2)
     dt = dur / (hand.shape[1] - 1)
     th = np.stack(M.inverse_kinematics(hand[..., 0], hand[..., 1]), -1)
     om = np.gradient(th, dt, axis=1)
@@ -81,19 +81,21 @@ def solve_one(job):
 
 
 def simulate(z, jobs=14):
-    Hs = {(rg, n): mean_flv(z, rg, n) for rg in C.REGIMES for n, _ in NETS}
-    work = [(rg, n, s, i, Hs[rg, n][i]) for rg in C.REGIMES for n, s in NETS for i in range(F.N_T)]
+    Hs = {(rg, n, s): mean_flv(z, rg, netkey(n, s)) for rg in C.REGIMES for n, s in NETS}
+    work = [(rg, n, s, i, Hs[rg, n, s][i]) for rg in C.REGIMES for n, s in NETS
+            for i in range(F.N_T)]
     with ProcessPoolExecutor(max_workers=jobs) as ex:
         res = list(ex.map(solve_one, work, chunksize=1))
     out = {}
     for rg in C.REGIMES:
         for n, s in NETS:
             sel = sorted((r for r in res if r[0][:3] == (rg, n, s)), key=lambda r: r[0][3])
-            out[f"{rg}|nl6m|{n}|r"] = np.stack([x[1] for x in sel]).astype(np.float32)
-            out[f"{rg}|nl6m|{n}|a"] = np.stack([x[2] for x in sel]).astype(np.float32)
-            out[f"{rg}|nl6m|{n}|hand"] = np.stack([x[3] for x in sel])
-            out[f"{rg}|nl6m|{n}|err"] = max(x[4] for x in sel)
-            out[f"{rg}|nl6m|{n}|H"] = Hs[rg, n]
+            k = netkey(n, s)
+            out[f"{rg}|nl6m|{k}|r"] = np.stack([x[1] for x in sel]).astype(np.float32)
+            out[f"{rg}|nl6m|{k}|a"] = np.stack([x[2] for x in sel]).astype(np.float32)
+            out[f"{rg}|nl6m|{k}|hand"] = np.stack([x[3] for x in sel])
+            out[f"{rg}|nl6m|{k}|err"] = max(x[4] for x in sel)
+            out[f"{rg}|nl6m|{k}|H"] = Hs[rg, n, s]
     np.savez_compressed(CACHE, **out)
 
 
@@ -104,10 +106,10 @@ def main():
     z = {**z0, **dict(np.load(CACHE))}
 
     for rg in C.REGIMES:
-        H = np.stack([z[f"{rg}|nl6m|{n}|H"] for n, _ in NETS])
+        H = np.stack([z[f"{rg}|nl6m|{netkey(n, s)}|H"] for n, s in NETS])
         print(f"{rg}: H range {H.min():.2f}-{H.max():.2f}, mean per muscle "
               f"{np.round(H.mean((0, 1)), 2)}, max endpoint err "
-              f"{max(float(z[f'{rg}|nl6m|{n}|err']) for n, _ in NETS):.1e} cm")
+              f"{max(float(z[f'{rg}|nl6m|{netkey(n, s)}|err']) for n, s in NETS):.1e} cm")
 
     F.RUNGS = F.RUNGS[:5] + [("nl6", "6  + muscle mechanics\n(FLV instantanée)"),
                              ("nl6m", "6'  + muscle mechanics\n(FLV moyenne, comme L&S)")]

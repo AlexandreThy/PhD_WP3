@@ -1,0 +1,14 @@
+1  2D point mass                               pooled θ= 162.6 r=0.04 CI95 [ 98.5,  52.9] | original 6 nets θ= 176.5 | per-network θ: mean  153.5, concentration 0.20, sig 4/20
+       12    22   141   163   136   110    22   155    40    64    75   165    88   176   144    26    79   133   128   132
+2  + geometry                                  pooled θ=  96.6 r=0.58 CI95 [ 95.5,  97.7] | original 6 nets θ=  99.2 | per-network θ: mean   96.5, concentration 1.00, sig 20/20
+      100    99    98   102    98    98    97    97    96    94    95    98    94    96    98    94    94    90    96    97
+3  + intersegmental dynamics                   pooled θ=  94.2 r=0.42 CI95 [ 92.1,  96.3] | original 6 nets θ=  98.8 | per-network θ: mean   93.6, concentration 0.99, sig 20/20
+       99    98    92   105    99    94    94    96    94    90    91    97    92    94    97    86    91    84    92    89
+4  + monoarticular muscles                     pooled θ=  96.7 r=0.45 CI95 [ 93.8,  99.6] | original 6 nets θ=  93.6 | per-network θ: mean   96.5, concentration 0.97, sig 19/20
+       87    90   100   116    86   101    91   105    89    96    93   103    99    96   102    85   101    93    97   102
+5  + biarticular muscles                       pooled θ=  96.5 r=0.67 CI95 [ 94.9,  97.9] | original 6 nets θ=  95.6 | per-network θ: mean   96.5, concentration 0.99, sig 20/20
+       92    94    96   103    98    96    91   102    92    91    98    98    93    99    98    97    97    93   101   100
+6  + muscle mechanics (FLV instantanée)        pooled θ=  95.9 r=0.68 CI95 [ 94.4,  97.2] | original 6 nets θ=  95.6 | per-network θ: mean   95.9, concentration 0.99, sig 20/20
+       93    95    94   101    99    95    90   101    92    91    97    98    91    99    97    97    96    93   102    98
+6'  + muscle mechanics (FLV moyenne, comme L&S) pooled θ=  96.4 r=0.69 CI95 [ 95.1,  97.7] | original 6 nets θ=  96.1 | per-network θ: mean   96.4, concentration 0.99, sig 20/20
+       94    96    95   102    98    95    91   101    92    92    97    98    94    99    97    98    97    92   103    99

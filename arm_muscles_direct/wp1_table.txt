@@ -1,0 +1,14 @@
+WP1 ILQG, centre-out (0.0, 40.0) cm, 15 cm, 0.4 s, 8 cibles, commande de repos tirent seulement v* = [-0.072  0.061 -0.047  0.059 -0.089  0.087]
+                                    poussent+tirent  tirent seulement
+vitesse pic (m/s)                             0.578             0.549
+instant du pic (ms)                             199               200
+courbure moyenne / max (%)               9.1 / 19.4        6.6 / 19.9
+erreur finale sans bruit (cm)                 0.006             0.020
+dispersion finale avec bruit (cm)              0.18              0.20
+fraction de commandes < 0                      0.51              0.00
+force totale intégrée                         0.233             0.337
+force totale / couple                          0.69              1.14
+erank couple (à travers cibles)                1.77              1.80
+erank commandes musculaires                    2.63              3.54
+complexité temporelle par muscle   1.8 2.2 2.6 2.7 2.6 2.4 3.1 3.5 4.6 3.9 3.9 3.5
+écart max des trajectoires sans bruit entre modèles : 0.94 cm en moyenne, 2.97 cm au pire
